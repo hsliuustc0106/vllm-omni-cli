@@ -1,4 +1,4 @@
-# vllm-omni-cli (`vo`)
+# vllm-omni-cli
 
 Multi-agent collaboration framework for [vllm-omni](https://github.com/vllm-project/vllm-omni) and HPC inference scenarios.
 
@@ -15,6 +15,13 @@ Multi-agent collaboration framework for [vllm-omni](https://github.com/vllm-proj
 ## Install
 
 ```bash
+# Create environment
+conda create -n vllm_omni_agents python=3.11
+conda activate vllm_omni_agents
+
+# Clone & install
+git clone https://github.com/hsliuustc0106/vllm-omni-cli.git
+cd vllm-omni-cli
 pip install -e .
 ```
 

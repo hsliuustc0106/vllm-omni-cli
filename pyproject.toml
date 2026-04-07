@@ -27,7 +27,7 @@ dev = [
 ]
 
 [project.scripts]
-vo = "vomni.cli:app"
+vllm_omni = "vomni.cli:app"
 
 [project.entry-points."vomni.tools"]
 
