@@ -18,10 +18,10 @@ from .core.context import Context, Task
 from .core.llm import LLMBackend
 from .core.pipeline import Pipeline
 from .core.tool import ToolRegistry
-from .skills.adapter import SkillAdapter
+from .core.skill import SkillAdapter
 from .tools import BUILTIN_TOOLS
 
-app = typer.Typer(name="vo", help="vllm-omni-cli: Multi-agent framework for vllm-omni")
+app = typer.Typer(name="vllm_omni_cli", help="vllm-omni-cli: Multi-agent framework for vllm-omni")
 console = Console()
 
 

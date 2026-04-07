@@ -27,7 +27,7 @@ def test_build_system_prompt():
     agent = BaseAgent(role="Base role", skills=[EchoSkill()])
     prompt = agent._build_system_prompt()
     assert "Base role" in prompt
-    assert "Echo" in prompt
+    assert "echo" in prompt
 
 
 def test_chat_without_llm_call():

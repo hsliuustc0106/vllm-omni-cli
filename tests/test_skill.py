@@ -1,5 +1,6 @@
 """Tests for skill adapter."""
 
+import pytest
 from pathlib import Path
 
 from vllm_omni_cli.core.skill import BaseSkill, SkillAdapter

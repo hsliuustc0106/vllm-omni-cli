@@ -24,8 +24,8 @@ class BaseAgent:
     name: str = "agent"
     role: str = "You are a helpful assistant."
     model: str = "gpt-4o"
-    skills: list[BaseSkill] = Field(default_factory=list)
-    tools: list[BaseTool] = Field(default_factory=list)
+    skills: list[BaseSkill] = []
+    tools: list[BaseTool] = []
 
     def __init__(
         self,
@@ -43,9 +43,9 @@ class BaseAgent:
         if model is not None:
             self.model = model
         if skills is not None:
-            self.skills = skills
+            self.skills = list(skills)
         if tools is not None:
-            self.tools = tools
+            self.tools = list(tools)
         self._llm = llm or LLMBackend(model=self.model)
         self._tool_registry = ToolRegistry()
         for t in self.tools:
