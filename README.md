@@ -41,31 +41,31 @@ export VLLM_OMNI_AGENTS_MODEL_NAME="your-model-name"
 验证配置：
 
 ```bash
-vllm_omni config list
+vllm_omni_cli config list
 ```
 
 ## 快速开始
 
 ```bash
 # 初始化配置
-vllm_omni config init
+vllm_omni_cli config init
 
 # 运行任务（自动编排 Agent）
-vllm_omni run "Design a distributed serving pipeline for Qwen3-Omni"
+vllm_omni_cli run "Design a distributed serving pipeline for Qwen3-Omni"
 
 # 指定 Agent
-vllm_omni run "Optimize attention kernel for NPU" --agents optimizer,coder
+vllm_omni_cli run "Optimize attention kernel for NPU" --agents optimizer,coder
 
 # 使用 Pipeline YAML 定义工作流
-vllm_omni run "Build a custom attention kernel" --pipeline pipeline.yaml
+vllm_omni_cli run "Build a custom attention kernel" --pipeline pipeline.yaml
 
 # 交互式对话
-vllm_omni chat --agent architect
+vllm_omni_cli chat --agent architect
 
 # 查看可用资源
-vllm_omni list agents
-vllm_omni list tools
-vllm_omni list skills
+vllm_omni_cli list agents
+vllm_omni_cli list tools
+vllm_omni_cli list skills
 ```
 
 ## 架构
@@ -73,7 +73,7 @@ vllm_omni list skills
 ```
 ┌──────────────────────────────────────────────────────┐
 │                      CLI (typer)                      │
-│            vllm_omni run / chat / config              │
+│            vllm_omni_cli run / chat / config              │
 ├──────────────────────────────────────────────────────┤
 │                    Pipeline (DAG)                     │
 │           按 DAG 拓扑序编排 Agent 执行                  │
@@ -148,7 +148,7 @@ config:
 运行：
 
 ```bash
-vllm_omni run "Optimize Qwen3-Omni inference on 8xA100" --pipeline pipeline.yaml
+vllm_omni_cli run "Optimize Qwen3-Omni inference on 8xA100" --pipeline pipeline.yaml
 ```
 
 ## 编写插件
@@ -231,7 +231,7 @@ tools: [shell, vllm]
 加载：
 
 ```bash
-vllm_omni skill install /path/to/my-skill
+vllm_omni_cli skill install /path/to/my-skill
 ```
 
 ## 配置

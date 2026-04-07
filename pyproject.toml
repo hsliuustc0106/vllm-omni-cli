@@ -27,7 +27,7 @@ dev = [
 ]
 
 [project.scripts]
-vllm_omni = "vllm_omni_cli.cli:app"
+vllm_omni_cli = "vllm_omni_cli.cli:app"
 
 [project.entry-points."vllm_omni_cli.tools"]
 
