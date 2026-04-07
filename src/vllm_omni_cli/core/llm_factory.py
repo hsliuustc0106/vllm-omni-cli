@@ -26,7 +26,7 @@ DEFAULT_MODEL_LEVELS = {
     "fast": {
         "description": "Fast models for simple tasks (planning, summarization)",
         "priority": 2,
-        "default": {"model": "glm-5.1", "temperature": 0.3, "max_tokens": 4096},
+        "default": {"model": "glm-5", "temperature": 0.3, "max_tokens": 4096},
     },
 }
 
