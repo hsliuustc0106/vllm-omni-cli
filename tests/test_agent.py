@@ -2,9 +2,9 @@
 
 import pytest
 
-from vomni.core.agent import BaseAgent, AgentResult
-from vomni.core.context import Context, Task
-from vomni.core.skill import BaseSkill
+from vllm_omni_cli.core.agent import BaseAgent, AgentResult
+from vllm_omni_cli.core.context import Context, Task
+from vllm_omni_cli.core.skill import BaseSkill
 
 
 class EchoSkill(BaseSkill):

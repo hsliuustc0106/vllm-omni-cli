@@ -50,9 +50,9 @@ class ToolRegistry:
         return self._tools.get(name)
 
     def discover(self) -> None:
-        """Discover tools via importlib.metadata entry_points 'vomni.tools'."""
+        """Discover tools via importlib.metadata entry_points 'vllm_omni_cli.tools'."""
         try:
-            eps = importlib.metadata.entry_points(group="vomni.tools")
+            eps = importlib.metadata.entry_points(group="vllm_omni_cli.tools")
         except AttributeError:
             return
         for ep in eps:

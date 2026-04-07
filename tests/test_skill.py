@@ -2,8 +2,8 @@
 
 from pathlib import Path
 
-from vomni.core.skill import BaseSkill, SkillAdapter
-from vomni.core.context import Context, Task
+from vllm_omni_cli.core.skill import BaseSkill, SkillAdapter
+from vllm_omni_cli.core.context import Context, Task
 
 
 class FakeSkill(BaseSkill):

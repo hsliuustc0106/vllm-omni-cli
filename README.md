@@ -157,7 +157,7 @@ vllm_omni run "Optimize Qwen3-Omni inference on 8xA100" --pipeline pipeline.yaml
 
 ```python
 # my_tool.py
-from vomni.core.tool import BaseTool
+from vllm_omni_cli.core.tool import BaseTool
 
 class NpuProfileTool(BaseTool):
     name = "npu-profile"
@@ -178,7 +178,7 @@ class NpuProfileTool(BaseTool):
 在 `pyproject.toml` 中注册：
 
 ```toml
-[project.entry-points."vomni.tools"]
+[project.entry-points."vllm_omni_cli.tools"]
 npu-profile = "my_tool:NpuProfileTool"
 ```
 
@@ -186,7 +186,7 @@ npu-profile = "my_tool:NpuProfileTool"
 
 ```python
 # my_agent.py
-from vomni.core.agent import BaseAgent
+from vllm_omni_cli.core.agent import BaseAgent
 
 class SecurityReviewer(BaseAgent):
     def __init__(self, **kwargs):
@@ -200,7 +200,7 @@ class SecurityReviewer(BaseAgent):
 注册：
 
 ```toml
-[project.entry-points."vomni.agents"]
+[project.entry-points."vllm_omni_cli.agents"]
 security-reviewer = "my_agent:SecurityReviewer"
 ```
 

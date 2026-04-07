@@ -2,7 +2,7 @@
 
 import pytest
 
-from vomni.core.tool import BaseTool, ToolRegistry
+from vllm_omni_cli.core.tool import BaseTool, ToolRegistry
 
 
 class DummyTool(BaseTool):
