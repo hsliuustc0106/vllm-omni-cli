@@ -1,193 +1,212 @@
 # vllm-omni-cli
 
-Multi-agent collaboration framework for [vllm-omni](https://github.com/vllm-project/vllm-omni) and HPC inference scenarios.
+面向 vllm-omni 与高性能计算场景的 LLM 多 Agent 协作框架。通过智能 Agent 协同，将高性能代码的开发与优化效率提升到新的高度。
 
-## Features
+- **可组合性**：Agent、Skill、Tools 可灵活组合，适应不同任务需求
+- **可扩展性**：通过 Skill 系统和 Agent 注册机制，社区可轻松扩展能力
+- **Skills 桥接**：直接加载 [vllm-omni-skills](https://github.com/hsliuustc0106/vllm-omni-skills)（SKILL.md 格式）
+- **统一 LLM 后端**：通过 litellm 接入任意 LLM（DeepSeek、OpenAI、Anthropic、本地模型等）
+- **Pipeline DAG**：有向无环图编排多 Agent 工作流，支持条件路由和并行分支
+- **插件系统**：通过 `entry_points` 扩展 Tools/Skills/Agents（类似 pytest 插件机制）
 
-- **Composable Agents & Skills** — Mix and match agents, skills, and tools freely
-- **Plugin System** — Extend via `entry_points` (like pytest plugins)
-- **Skills Bridge** — Load vllm-omni-skills (SKILL.md format) directly
-- **Unified LLM Backend** — Use any LLM via litellm (OpenAI, Anthropic, local, etc.)
-- **Pipeline DAG** — Orchestrate multi-agent workflows with conditional routing
-- **Built-in Agents** — Architect, Coder, Optimizer, Reviewer
-- **Built-in Tools** — GitHub, vllm-omni CLI, Shell
-
-## Install
+## 安装
 
 ```bash
-# Create environment
+# 1. 创建环境
 conda create -n vllm_omni_agents python=3.11
 conda activate vllm_omni_agents
 
-# Clone & install
+# 2. 克隆 & 安装
 git clone https://github.com/hsliuustc0106/vllm-omni-cli.git
 cd vllm-omni-cli
 pip install -e .
 ```
 
-Or with dev dependencies:
+## 快速配置
+
+通过环境变量配置 LLM 后端（环境变量优先级高于配置文件）：
 
 ```bash
-pip install -e ".[dev]"
-```
-
-### Quick Configuration
-
-Set your LLM backend via environment variables:
-
-```bash
-# DeepSeek (default)
+# DeepSeek（推荐）
 export VLLM_OMNI_AGENTS_BASE_URL="https://api.deepseek.com/beta/"
 export VLLM_OMNI_AGENTS_API_KEY="your-key-here"
 export VLLM_OMNI_AGENTS_MODEL_NAME="deepseek-chat"
 
-# Or use any OpenAI-compatible API
+# 或使用任意 OpenAI 兼容 API
 export VLLM_OMNI_AGENTS_BASE_URL="https://your-api-endpoint/v1"
 export VLLM_OMNI_AGENTS_API_KEY="your-key-here"
 export VLLM_OMNI_AGENTS_MODEL_NAME="your-model-name"
 ```
 
-Then verify:
+验证配置：
 
 ```bash
-vo config list
+vllm_omni config list
 ```
 
-## Quick Start
+## 快速开始
 
 ```bash
-# Initialize config
-vo config init
+# 初始化配置
+vllm_omni config init
 
-# Set your LLM model
-vo config set llm.model claude-3-5-sonnet-20241022
-vo config set llm.api_key sk-...
+# 运行任务（自动编排 Agent）
+vllm_omni run "Design a distributed serving pipeline for Qwen3-Omni"
 
-# Run a task with all agents
-vo run "Design a distributed serving pipeline for Llama-3-70B"
+# 指定 Agent
+vllm_omni run "Optimize attention kernel for NPU" --agents optimizer,coder
 
-# Use specific agents
-vo run "Optimize attention kernel" --agents optimizer,coder
+# 使用 Pipeline YAML 定义工作流
+vllm_omni run "Build a custom attention kernel" --pipeline pipeline.yaml
 
-# Interactive chat
-vo chat --agent architect
+# 交互式对话
+vllm_omni chat --agent architect
 
-# List available resources
-vo list agents
-vo list tools
-vo list skills
+# 查看可用资源
+vllm_omni list agents
+vllm_omni list tools
+vllm_omni list skills
 ```
 
-## Architecture
+## 架构
 
 ```
-┌─────────────────────────────────────────────────────┐
-│                    CLI (typer)                       │
-│                  vo run / chat / config              │
-├─────────────────────────────────────────────────────┤
-│                   Pipeline (DAG)                     │
-│         orchestrates agents in topo order            │
-├──────────┬──────────┬──────────┬────────────────────┤
-│Architect │  Coder   │Optimizer │ Reviewer  │ Custom │
-│  Agent   │  Agent   │  Agent   │  Agent    │ Agents │
-├──────────┴──────────┴──────────┴────────────────────┤
-│              Skills + Knowledge Base                  │
-│         (loaded from SKILL.md directories)           │
-├──────────┬──────────┬──────────┬────────────────────┤
-│ GitHub   │  vllm    │  Shell   │  Custom            │
-│  Tool    │  Tool    │  Tool    │  Tools             │
-├──────────┴──────────┴──────────┴────────────────────┤
-│              LLM Backend (litellm)                    │
-│       OpenAI · Anthropic · Local · Any provider      │
-└─────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────┐
+│                      CLI (typer)                      │
+│            vllm_omni run / chat / config              │
+├──────────────────────────────────────────────────────┤
+│                    Pipeline (DAG)                     │
+│           按 DAG 拓扑序编排 Agent 执行                  │
+├──────────┬──────────┬──────────┬─────────────────────┤
+│Architect │  Coder   │Optimizer │ Reviewer │  Custom   │
+│  Agent   │  Agent   │  Agent   │  Agent   │  Agents  │
+├──────────┴──────────┴──────────┴─────────────────────┤
+│               Skills + Knowledge Base                 │
+│          （从 SKILL.md 目录自动加载）                   │
+├──────────┬──────────┬──────────┬─────────────────────┤
+│ GitHub   │  vllm    │  Shell   │  Custom              │
+│  Tool    │  Tool    │  Tool    │  Tools               │
+├──────────┴──────────┴──────────┴─────────────────────┤
+│              LLM Backend (litellm)                     │
+│       DeepSeek · OpenAI · Anthropic · 本地 · 任意      │
+└──────────────────────────────────────────────────────┘
 ```
 
-## Pipeline Definition
+### 内置 Agent
 
-Create a `pipeline.yaml`:
+| Agent | 职责 |
+|-------|------|
+| **Architect** | HPC/分布式推理架构设计，精通 TP/PP/HSDP/Disaggregated Serving |
+| **Coder** | Python/CUDA/PyTorch 开发，模型集成、自定义 pipeline、算子开发 |
+| **Optimizer** | 性能分析与优化，profiling、kernel 调优、量化、cache 策略 |
+| **Reviewer** | 代码审查，检查正确性、性能影响、测试覆盖、项目规范 |
+
+### 内置 Tool
+
+| Tool | 说明 |
+|------|------|
+| **github** | GitHub CLI 封装（PR 管理、Issue、Review） |
+| **vllm** | vllm serve/bench 封装（`vllm serve --omni`） |
+| **shell** | 安全的 Shell 命令执行（带超时保护） |
+
+## Pipeline 定义
+
+创建 `pipeline.yaml`：
 
 ```yaml
+name: "HPC Performance Optimization"
+
 agents:
   - name: architect
-    role: "You are an HPC architect."
-    model: gpt-4o
+    model: deepseek-chat
+    skills: [hpc-design, vllm-config]
   - name: coder
-    role: "You are a Python developer."
-    model: gpt-4o
+    model: deepseek-chat
+    skills: [model-integration, distributed-code]
+  - name: optimizer
+    model: deepseek-chat
+    skills: [profiling, kernel-analysis]
   - name: reviewer
-    role: "You are a code reviewer."
-    model: gpt-4o
+    model: deepseek-chat
+    skills: [code-review]
 
 edges:
   - from: architect
     to: coder
   - from: coder
+    to: optimizer
+  - from: optimizer
+    to: coder
+  - from: coder
     to: reviewer
+
+config:
+  human_in_the_loop: true
+  max_rounds: 10
 ```
 
-Run it:
+运行：
 
 ```bash
-vo run "Build a custom attention kernel" --pipeline pipeline.yaml
+vllm_omni run "Optimize Qwen3-Omni inference on 8xA100" --pipeline pipeline.yaml
 ```
 
-## Writing Plugins
+## 编写插件
 
-### Custom Tool
+### 自定义 Tool
 
 ```python
 # my_tool.py
 from vomni.core.tool import BaseTool
 
-class SlackTool(BaseTool):
-    name = "slack"
-    description = "Send messages to Slack"
+class NpuProfileTool(BaseTool):
+    name = "npu-profile"
+    description = "华为 NPU 性能分析"
     parameters = {
         "type": "object",
         "properties": {
-            "channel": {"type": "string"},
-            "message": {"type": "string"},
+            "command": {"type": "string", "description": "要分析的推理命令"},
         },
-        "required": ["channel", "message"],
+        "required": ["command"],
     }
 
     async def execute(self, **kwargs):
-        # Your implementation
-        return f"Sent to {kwargs['channel']}"
+        # 实现你的逻辑
+        return f"Profile result for: {kwargs['command']}"
 ```
 
-Register in `pyproject.toml`:
+在 `pyproject.toml` 中注册：
 
 ```toml
 [project.entry-points."vomni.tools"]
-slack = "my_tool:SlackTool"
+npu-profile = "my_tool:NpuProfileTool"
 ```
 
-### Custom Agent
+### 自定义 Agent
 
 ```python
 # my_agent.py
 from vomni.core.agent import BaseAgent
 
-class DataAgent(BaseAgent):
+class SecurityReviewer(BaseAgent):
     def __init__(self, **kwargs):
         super().__init__(
-            name="data-scientist",
-            role="You analyze ML training data and metrics.",
+            name="security-reviewer",
+            role="You are a security expert specializing in ML inference.",
             **kwargs,
         )
 ```
 
-Register:
+注册：
 
 ```toml
 [project.entry-points."vomni.agents"]
-data-scientist = "my_agent:DataAgent"
+security-reviewer = "my_agent:SecurityReviewer"
 ```
 
-### Custom Skill (SKILL.md format)
+### 自定义 Skill（SKILL.md 格式）
 
-Create a directory with `SKILL.md`:
+创建目录并编写 `SKILL.md`：
 
 ```
 my-skill/
@@ -209,21 +228,21 @@ tools: [shell, vllm]
 - Use warp-level primitives (shfl_sync)
 ```
 
-Install:
+加载：
 
 ```bash
-vo skill install /path/to/my-skill
+vllm_omni skill install /path/to/my-skill
 ```
 
-## Configuration
+## 配置
 
-Config lives at `~/.vo/config.toml`:
+配置文件位于 `~/.vo/config.toml`：
 
 ```toml
 [llm]
-model = "gpt-4o"
+model = "deepseek-chat"
 api_key = ""
-base_url = ""
+base_url = "https://api.deepseek.com/beta/"
 
 [tools]
 github_token = ""
@@ -236,7 +255,7 @@ agents = ["architect", "coder", "reviewer"]
 human_in_the_loop = false
 ```
 
-## Development
+## 开发
 
 ```bash
 pip install -e ".[dev]"
@@ -244,10 +263,11 @@ ruff check src/
 pytest tests/
 ```
 
-## Links
+## 链接
 
-- [vllm-omni](https://github.com/vllm-project/vllm-omni) — Multi-modal inference engine
-- [vllm-omni-skills](https://github.com/vllm-project/vllm-omni-skills) — Agent skill library
+- [vllm-omni](https://github.com/vllm-project/vllm-omni) — 多模态推理引擎
+- [vllm-omni-skills](https://github.com/hsliuustc0106/vllm-omni-skills) — AI 辅助技能集合（16 个 Skills）
+- [vllm-omni 论文](https://arxiv.org/abs/2602.02204)
 
 ## License
 
