@@ -6,7 +6,7 @@
 - **可扩展性**：通过 Skill 系统和 Agent 注册机制，社区可轻松扩展能力
 - **Skills 桥接**：直接加载 [vllm-omni-skills](https://github.com/hsliuustc0106/vllm-omni-skills)（SKILL.md 格式）
 - **统一 LLM 后端**：通过 litellm 接入任意 LLM（DeepSeek、OpenAI、Anthropic、本地模型等）
-- **Pipeline DAG**：有向无环图编排多 Agent 工作流，支持条件路由和并行分支
+- **Lead Agent**：智能编排器动态规划 Agent 执行顺序，支持循环、条件路由和人工介入
 - **插件系统**：通过 `entry_points` 扩展 Tools/Skills/Agents（类似 pytest 插件机制）
 
 ## 安装
@@ -75,8 +75,8 @@ vllm_omni_cli list skills
 │                      CLI (typer)                      │
 │            vllm_omni_cli run / chat / config              │
 ├──────────────────────────────────────────────────────┤
-│                    Pipeline (DAG)                     │
-│           按 DAG 拓扑序编排 Agent 执行                  │
+│                    Lead Agent (编排器)                   │
+│         动态规划 Agent 执行顺序，支持循环和条件路由          │
 ├──────────┬──────────┬──────────┬─────────────────────┤
 │Architect │  Coder   │Optimizer │ Reviewer │  Custom   │
 │  Agent   │  Agent   │  Agent   │  Agent   │  Agents  │

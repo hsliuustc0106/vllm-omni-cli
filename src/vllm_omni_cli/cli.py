@@ -16,6 +16,7 @@ from .config import config_get, config_init, config_list, config_set
 from .core.agent import BaseAgent
 from .core.context import Context, Task
 from .core.llm import LLMBackend
+from .core.lead_agent import LeadAgent
 from .core.pipeline import Pipeline
 from .core.tool import ToolRegistry
 from .core.skill import SkillAdapter
@@ -35,30 +36,41 @@ def run(
     human_in_the_loop: bool = typer.Option(False, "--human-in-the-loop", help="Enable human review"),
 ) -> None:
     """Run a task with specified agents."""
+    llm = LLMBackend(model=model or config_get("llm.model") or "gpt-4o")
+    tool_reg = ToolRegistry()
+    tool_reg.discover()
+    for ToolCls in BUILTIN_TOOLS.values():
+        tool_reg.register(ToolCls())
+
+    skill_objs = _load_skills(skills)
+    agent_list = _resolve_agents(agents, model)
+    agent_instances = [
+        cls(tools=list(tool_reg._tools.values()), skills=skill_objs, llm=llm)
+        for cls in agent_list
+    ]
+
     if pipeline and pipeline.exists():
+        # Pipeline YAML loads agents in order, but LeadAgent decides execution
         pipe = Pipeline.from_yaml(pipeline)
-        result = asyncio.run(pipe.run(task))
-        for step in result.steps:
-            console.print(f"[bold]{step.agent_name}:[/bold] {step.content[:500]}")
-    else:
-        agent_list = _resolve_agents(agents, model)
-        llm = LLMBackend(model=model or config_get("llm.model") or "gpt-4o")
-        tool_reg = ToolRegistry()
-        tool_reg.discover()
-        for ToolCls in BUILTIN_TOOLS.values():
-            tool_reg.register(ToolCls())
+        agent_instances = pipe.agents or agent_instances
 
-        skill_objs = _load_skills(skills)
+    if not agent_instances:
+        console.print("[red]No agents available. Check --agents or pipeline config.[/red]")
+        raise typer.Exit(1)
 
-        t = Task(description=task)
-        ctx = Context(task=t)
-        for agent_cls in agent_list:
-            agent = agent_cls(tools=list(tool_reg._tools.values()), skills=skill_objs, llm=llm)
-            result = asyncio.run(agent.run(task, ctx))
-            ctx.add_message(agent.name, result.content)
-            console.print(f"[bold cyan]{agent.name}:[/bold cyan] {result.content[:500]}")
-            if human_in_the_loop:
-                typer.confirm("Continue to next agent?", abort=True)
+    lead = LeadAgent(
+        agents=agent_instances,
+        llm=llm,
+        human_in_the_loop=human_in_the_loop,
+    )
+    console.print(f"[green]Lead Agent orchestrating {len(agent_instances)} agents: {', '.join(a.name for a in agent_instances)}[/green]")
+    result = asyncio.run(lead.run(task))
+    console.print(f"\n[bold]Result ({result.rounds} rounds):[/bold]")
+    console.print(result.content)
+    if result.agent_calls:
+        console.print(f"\n[dim]Agent calls: {len(result.agent_calls)}[/dim]")
+        for call in result.agent_calls:
+            console.print(f"  [cyan]{call['agent_name']}:[/cyan] {call['task'][:80]}")
 
 
 @app.command()
