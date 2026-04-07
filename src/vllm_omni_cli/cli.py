@@ -16,6 +16,7 @@ from .config import config_get, config_init, config_list, config_set
 from .core.agent import BaseAgent
 from .core.context import Context, Task
 from .core.llm import LLMBackend
+from .core.llm_factory import LLMFactory
 from .core.lead_agent import LeadAgent
 from .core.pipeline import Pipeline
 from .core.tool import ToolRegistry
@@ -36,7 +37,15 @@ def run(
     human_in_the_loop: bool = typer.Option(False, "--human-in-the-loop", help="Enable human review"),
 ) -> None:
     """Run a task with specified agents."""
-    llm = LLMBackend(model=model or config_get("llm.model") or "gpt-4o")
+    cfg = config_list()
+    factory = LLMFactory(config=cfg.get("llm", {}))
+
+    # If --model is specified, override all levels
+    if model:
+        lead_llm = factory.create(model=model)
+    else:
+        lead_llm = factory.create(model_level="standard")
+
     tool_reg = ToolRegistry()
     tool_reg.discover()
     for ToolCls in BUILTIN_TOOLS.values():
@@ -44,10 +53,13 @@ def run(
 
     skill_objs = _load_skills(skills)
     agent_list = _resolve_agents(agents, model)
-    agent_instances = [
-        cls(tools=list(tool_reg._tools.values()), skills=skill_objs, llm=llm)
-        for cls in agent_list
-    ]
+    agent_instances = []
+    for cls in agent_list:
+        if model:
+            agent_llm = factory.create(model=model)
+        else:
+            agent_llm = factory.create_for_agent(cls.name)
+        agent_instances.append(cls(tools=list(tool_reg._tools.values()), skills=skill_objs, llm=agent_llm))
 
     if pipeline and pipeline.exists():
         # Pipeline YAML loads agents in order, but LeadAgent decides execution
@@ -60,7 +72,7 @@ def run(
 
     lead = LeadAgent(
         agents=agent_instances,
-        llm=llm,
+        llm=lead_llm,
         human_in_the_loop=human_in_the_loop,
     )
     console.print(f"[green]Lead Agent orchestrating {len(agent_instances)} agents: {', '.join(a.name for a in agent_instances)}[/green]")
@@ -84,8 +96,10 @@ def chat(
         console.print(f"[red]Agent '{agent_name}' not found[/red]")
         raise typer.Exit(1)
 
-    llm = LLMBackend(model=model or config_get("llm.model") or "gpt-4o")
-    agent = cls(llm=llm)
+    cfg = config_list()
+    factory = LLMFactory(config=cfg.get("llm", {}))
+    agent_llm = factory.create(model=model) if model else factory.create_for_agent(agent_name)
+    agent = cls(llm=agent_llm)
     history: list[dict] = []
 
     console.print(f"[green]Chatting with {agent.name}. Ctrl+C to exit.[/green]")

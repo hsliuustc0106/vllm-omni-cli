@@ -29,6 +29,7 @@ class ToolCall:
 @dataclass
 class LLMResponse:
     content: str = ""
+    reasoning_content: str = ""
     tool_calls: list[ToolCall] = field(default_factory=list)
     usage: Usage = field(default_factory=Usage)
     raw: Any = None
@@ -37,16 +38,32 @@ class LLMResponse:
 @dataclass
 class LLMChunk:
     delta_content: str = ""
+    delta_reasoning: str = ""
     delta_tool_calls: list[ToolCall] = field(default_factory=list)
 
 
 class LLMBackend:
     """Unified LLM backend using litellm."""
 
-    def __init__(self, model: str = "gpt-4o", api_key: str | None = None, base_url: str | None = None):
+    def __init__(self, model: str = "gpt-4o", api_key: str | None = None, base_url: str | None = None,
+                 temperature: float = 0.2, max_tokens: int = 8192, extra_body: dict | None = None):
         self.model = model
         self.api_key = api_key
         self.base_url = base_url
+        self.temperature = temperature
+        self.max_tokens = max_tokens
+        self.extra_body = extra_body or {}
+
+        # Token accumulation
+        self._prompt_tokens = 0
+        self._completion_tokens = 0
+
+        # Display control for stream
+        self.display_reasoning = True
+        self.display_content = True
+
+        # Thinking marker state
+        self._in_think_tag = False
 
     def _kwargs(self) -> dict[str, Any]:
         kw: dict[str, Any] = {"model": self.model}
@@ -54,7 +71,32 @@ class LLMBackend:
             kw["api_key"] = self.api_key
         if self.base_url:
             kw["api_base"] = self.base_url
+        kw["temperature"] = self.temperature
+        kw["max_tokens"] = self.max_tokens
+        if self.extra_body:
+            kw["extra_body"] = self.extra_body
         return kw
+
+    @property
+    def total_prompt_tokens(self) -> int:
+        return self._prompt_tokens
+
+    @property
+    def total_completion_tokens(self) -> int:
+        return self._completion_tokens
+
+    @property
+    def total_tokens(self) -> int:
+        return self._prompt_tokens + self._completion_tokens
+
+    def reset_token_stats(self):
+        self._prompt_tokens = 0
+        self._completion_tokens = 0
+
+    def _update_token_stats(self, usage: Usage | None):
+        if usage:
+            self._prompt_tokens += usage.prompt_tokens or 0
+            self._completion_tokens += usage.completion_tokens or 0
 
     def _parse_response(self, raw: Any) -> LLMResponse:
         choice = raw.choices[0]
@@ -75,7 +117,9 @@ class LLMBackend:
             completion_tokens=getattr(usage_info, "completion_tokens", 0) or 0,
             total_tokens=getattr(usage_info, "total_tokens", 0) or 0,
         )
-        return LLMResponse(content=msg.content or "", tool_calls=tool_calls, usage=usage, raw=raw)
+        reasoning = getattr(msg, 'reasoning_content', None) or ""
+        return LLMResponse(content=msg.content or "", reasoning_content=reasoning,
+                           tool_calls=tool_calls, usage=usage, raw=raw)
 
     def _diagnose_output(self, content: str, finish_reason: str, agent_name: str = "unknown") -> None:
         """Diagnose LLM output and log warnings for common issues."""
@@ -109,6 +153,7 @@ class LLMBackend:
         kw.update(kwargs)
         raw = await litellm.acompletion(**kw)
         resp = self._parse_response(raw)
+        self._update_token_stats(resp.usage)
         finish_reason = raw.choices[0].finish_reason if raw.choices else None
         self._diagnose_output(resp.content, finish_reason or "stop", agent_name="unknown")
         return resp
@@ -136,4 +181,13 @@ class LLMBackend:
                             arguments=tc.function.arguments if tc.function else "",
                         )
                     )
-            yield LLMChunk(delta_content=delta.content or "", delta_tool_calls=tc_list)
+            # Extract reasoning_content
+            reasoning_delta = getattr(delta, 'reasoning_content', None) or ""
+            content_delta = delta.content or ""
+
+            if reasoning_delta and self.display_reasoning:
+                yield LLMChunk(delta_reasoning=reasoning_delta, delta_content="")
+            if content_delta and self.display_content:
+                yield LLMChunk(delta_content=content_delta, delta_reasoning="")
+            if tc_list:
+                yield LLMChunk(delta_tool_calls=tc_list)
