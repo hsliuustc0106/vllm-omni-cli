@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 from typing import Any, AsyncIterator
 
 import litellm
 from pydantic import BaseModel
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -74,6 +77,28 @@ class LLMBackend:
         )
         return LLMResponse(content=msg.content or "", tool_calls=tool_calls, usage=usage, raw=raw)
 
+    def _diagnose_output(self, content: str, finish_reason: str, agent_name: str = "unknown") -> None:
+        """Diagnose LLM output and log warnings for common issues."""
+        if finish_reason == "length":
+            logger.warning(f"[{agent_name}] Output truncated (finish_reason='length'), content may be incomplete")
+        elif finish_reason == "content_filter":
+            logger.warning(f"[{agent_name}] Output filtered by content safety")
+        elif not content and finish_reason not in ("stop", "tool_calls", None):
+            logger.warning(f"[{agent_name}] Empty output with finish_reason='{finish_reason}'")
+        if not content and finish_reason == "stop":
+            logger.debug(f"[{agent_name}] Empty content with finish_reason='stop'")
+
+    @staticmethod
+    def split_think(content: str) -> tuple[str, str]:
+        """Split thinking content from response (DeepSeek style)."""
+        for m in ["🤔", "\nReasoning:", "\n<think"]:
+            pos = content.find(m)
+            if pos != -1:
+                reasoning = content[:pos].strip()
+                answer = content[pos + len(m):].strip()
+                return answer, reasoning
+        return content, ""
+
     async def complete(
         self, messages: list[dict], tools: list[dict] | None = None, **kwargs: Any
     ) -> LLMResponse:
@@ -83,7 +108,10 @@ class LLMBackend:
             kw["tools"] = tools
         kw.update(kwargs)
         raw = await litellm.acompletion(**kw)
-        return self._parse_response(raw)
+        resp = self._parse_response(raw)
+        finish_reason = raw.choices[0].finish_reason if raw.choices else None
+        self._diagnose_output(resp.content, finish_reason or "stop", agent_name="unknown")
+        return resp
 
     async def stream(
         self, messages: list[dict], tools: list[dict] | None = None, **kwargs: Any

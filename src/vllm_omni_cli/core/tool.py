@@ -15,6 +15,8 @@ class BaseTool(ABC):
     name: str = ""
     description: str = ""
     parameters: dict[str, Any] = {}
+    category: str = "basic"  # basic, domain, execution, interaction
+    scopes: list[str] = ["all"]  # which agents can use this tool
 
     @abstractmethod
     async def execute(self, **kwargs: Any) -> Any: ...
@@ -64,8 +66,33 @@ class ToolRegistry:
             except Exception:
                 continue
 
-    def to_openai_tools(self) -> list[dict[str, Any]]:
-        return [t.to_openai_tool() for t in self._tools.values()]
+    def get_tools(self, scope: str | None = None, categories: list[str] | None = None) -> list[BaseTool]:
+        tools = []
+        for tool in self._tools.values():
+            if scope and "all" not in tool.scopes and scope not in tool.scopes:
+                continue
+            if categories and tool.category not in categories:
+                continue
+            tools.append(tool)
+        return tools
+
+    def to_openai_tools(self, scope: str | None = None, categories: list[str] | None = None) -> list[dict[str, Any]]:
+        return [t.to_openai_tool() for t in self.get_tools(scope=scope, categories=categories)]
+
+    def to_markdown(self, scope: str | None = None) -> str:
+        """Format tools as markdown for prompt injection."""
+        tools = self.get_tools(scope=scope)
+        lines = []
+        for tool in tools:
+            params = tool.parameters.get("properties", {})
+            required = tool.parameters.get("required", [])
+            param_strs = []
+            for pname, pinfo in params.items():
+                req = " (required)" if pname in required else " (optional)"
+                desc = pinfo.get("description", pinfo.get("type", ""))
+                param_strs.append(f"  - {pname}: {desc}{req}")
+            lines.append(f"### {tool.name}\n{tool.description}\nParameters:\n" + "\n".join(param_strs))
+        return "\n\n".join(lines)
 
     def to_anthropic_tools(self) -> list[dict[str, Any]]:
         return [t.to_anthropic_tool() for t in self._tools.values()]

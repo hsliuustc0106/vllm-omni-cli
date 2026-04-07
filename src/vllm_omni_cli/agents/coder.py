@@ -1,9 +1,11 @@
 """Coder agent for vllm-omni development."""
 
-from ..core.agent import BaseAgent
+from ..core.react_agent import ReActAgent
+from ..core.registry import register_agent
 
 
-class CoderAgent(BaseAgent):
+@register_agent("coder", scopes=["development", "inference"])
+class CoderAgent(ReActAgent):
     """Expert Python/CUDA/PyTorch developer for model inference."""
 
     def __init__(self, **kwargs) -> None:  # noqa: ANN003

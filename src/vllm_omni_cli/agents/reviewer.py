@@ -1,9 +1,11 @@
 """Reviewer agent for code review."""
 
-from ..core.agent import BaseAgent
+from ..core.react_agent import ReActAgent
+from ..core.registry import register_agent
 
 
-class ReviewerAgent(BaseAgent):
+@register_agent("reviewer", scopes=["development"])
+class ReviewerAgent(ReActAgent):
     """Code reviewer for vllm-omni."""
 
     def __init__(self, **kwargs) -> None:  # noqa: ANN003

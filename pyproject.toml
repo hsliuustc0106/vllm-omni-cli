@@ -17,6 +17,7 @@ dependencies = [
     "pyyaml",
     "toml",
     "httpx",
+    "jinja2",
 ]
 
 [project.optional-dependencies]

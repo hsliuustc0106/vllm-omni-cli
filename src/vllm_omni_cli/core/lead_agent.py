@@ -151,6 +151,7 @@ Rules:
 
         for round_num in range(self.max_rounds):
             response = await self._llm.complete(messages, tools=tools)
+            self._llm._diagnose_output(response.content, "stop", agent_name="lead")
 
             if not response.tool_calls:
                 # No tool call — model gave a final text response, treat as finish

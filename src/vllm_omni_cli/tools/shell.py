@@ -16,6 +16,8 @@ class ShellTool(BaseTool):
 
     name = "shell"
     description = "Execute shell commands. Use 'run' for normal execution, 'run_with_timeout' for timeout."
+    category = "execution"
+    scopes = ["all"]
     parameters = {
         "type": "object",
         "properties": {

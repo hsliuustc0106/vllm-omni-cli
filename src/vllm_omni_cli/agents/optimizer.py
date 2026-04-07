@@ -1,9 +1,11 @@
 """Optimizer agent for inference performance."""
 
-from ..core.agent import BaseAgent
+from ..core.react_agent import ReActAgent
+from ..core.registry import register_agent
 
 
-class OptimizerAgent(BaseAgent):
+@register_agent("optimizer", scopes=["hpc", "inference"])
+class OptimizerAgent(ReActAgent):
     """Performance optimization expert for deep learning inference."""
 
     def __init__(self, **kwargs) -> None:  # noqa: ANN003

@@ -1,9 +1,11 @@
 """Architect agent for HPC and distributed inference design."""
 
-from ..core.agent import BaseAgent
+from ..core.react_agent import ReActAgent
+from ..core.registry import register_agent
 
 
-class ArchitectAgent(BaseAgent):
+@register_agent("architect", scopes=["hpc", "inference"])
+class ArchitectAgent(ReActAgent):
     """Designs efficient inference pipelines for vllm-omni."""
 
     def __init__(self, **kwargs) -> None:  # noqa: ANN003
