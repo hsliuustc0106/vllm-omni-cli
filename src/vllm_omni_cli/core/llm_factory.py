@@ -5,19 +5,28 @@ from .llm import LLMBackend
 
 logger = logging.getLogger(__name__)
 
+# Default model: GLM-5.1 (智谱旗舰模型，支持 Agentic Coding)
+# API: https://open.bigmodel.cn/api/paas/v4/chat/completions
+# litellm prefix: openai/ (uses OpenAI-compatible provider)
+DEFAULT_MODEL = "glm-5.1"
+DEFAULT_BASE_URL = "https://open.bigmodel.cn/api/paas/v4"
+
 # Default model levels
 DEFAULT_MODEL_LEVELS = {
     "complex": {
         "description": "Powerful models for complex reasoning tasks (architect, optimizer)",
-        "priority": 0,  # highest
+        "priority": 0,
+        "default": {"model": "glm-5.1", "extra_body": {"thinking": {"type": "enabled"}}, "temperature": 1.0, "max_tokens": 65536},
     },
     "standard": {
         "description": "Standard models for general tasks (coder, reviewer)",
         "priority": 1,
+        "default": {"model": "glm-5.1", "temperature": 0.2, "max_tokens": 16384},
     },
     "fast": {
         "description": "Fast models for simple tasks (planning, summarization)",
         "priority": 2,
+        "default": {"model": "glm-5.1", "temperature": 0.3, "max_tokens": 4096},
     },
 }
 
@@ -84,7 +93,7 @@ class LLMFactory:
         level_config = self._config.get("models", {}).get(model_level, {})
 
         # Merge: direct params > level config > defaults
-        final_model = model or level_config.get("model") or self._config.get("model", "gpt-4o")
+        final_model = model or level_config.get("model") or self._config.get("model", "glm-5.1")
         final_api_key = api_key or level_config.get("api_key") or self._config.get("api_key")
         final_base_url = base_url or level_config.get("base_url") or self._config.get("base_url")
         final_temperature = temperature if temperature is not None else level_config.get("temperature", 0.2)

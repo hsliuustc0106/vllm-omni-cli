@@ -8,7 +8,7 @@ from vllm_omni_cli.core.llm_factory import LLMFactory, AGENT_LEVEL_MAP, DEFAULT_
 def test_factory_create_with_defaults():
     factory = LLMFactory()
     backend = factory.create()
-    assert backend.model == "gpt-4o"
+    assert backend.model == "glm-5.1"
     assert backend.temperature == 0.2
     assert backend.max_tokens == 8192
 

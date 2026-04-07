@@ -47,7 +47,7 @@ def test_builtin_agents_exist(key, cls):
     agent = cls()
     assert agent.name == key
     assert len(agent.role) > 0
-    assert agent.model == "gpt-4o"
+    assert agent.model == "glm-5.1"
 
 
 class _SkillA(BaseSkill):

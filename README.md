@@ -5,7 +5,7 @@
 - **可组合性**：Agent、Skill、Tools 可灵活组合，适应不同任务需求
 - **可扩展性**：通过 Skill 系统和 Agent 注册机制，社区可轻松扩展能力
 - **Skills 桥接**：直接加载 [vllm-omni-skills](https://github.com/hsliuustc0106/vllm-omni-skills)（SKILL.md 格式）
-- **统一 LLM 后端**：通过 litellm 接入任意 LLM（DeepSeek、OpenAI、Anthropic、本地模型等）
+- **统一 LLM 后端**：通过 litellm 接入任意 LLM（glm-5.1 (智谱 GLM)、OpenAI、Anthropic、本地模型等）
 - **Lead Agent**：智能编排器动态规划 Agent 执行顺序，支持循环、条件路由和人工介入
 - **插件系统**：通过 `entry_points` 扩展 Tools/Skills/Agents（类似 pytest 插件机制）
 
@@ -27,15 +27,15 @@ pip install -e .
 通过环境变量配置 LLM 后端（环境变量优先级高于配置文件）：
 
 ```bash
-# DeepSeek（推荐）
-export VLLM_OMNI_AGENTS_BASE_URL="https://api.deepseek.com/beta/"
-export VLLM_OMNI_AGENTS_API_KEY="your-key-here"
-export VLLM_OMNI_AGENTS_MODEL_NAME="deepseek-chat"
+# glm-5.1 (智谱 GLM)（推荐）
+export VLLM_OMNI_AGENTS_BASE_URL="https://open.bigmodel.cn/api/paas/v4"
+export VLLM_OMNI_AGENTS_API_KEY="your-api-key"
+export VLLM_OMNI_AGENTS_MODEL_NAME="glm-5.1"
 
 # 或使用任意 OpenAI 兼容 API
-export VLLM_OMNI_AGENTS_BASE_URL="https://your-api-endpoint/v1"
-export VLLM_OMNI_AGENTS_API_KEY="your-key-here"
-export VLLM_OMNI_AGENTS_MODEL_NAME="your-model-name"
+export VLLM_OMNI_AGENTS_BASE_URL="https://open.bigmodel.cn/api/paas/v4"
+export VLLM_OMNI_AGENTS_API_KEY="your-api-key"
+export VLLM_OMNI_AGENTS_MODEL_NAME="glm-5.1"
 ```
 
 验证配置：
@@ -88,7 +88,7 @@ vllm_omni_cli list skills
 │  Tool    │  Tool    │  Tool    │  Tools               │
 ├──────────┴──────────┴──────────┴─────────────────────┤
 │              LLM Backend (litellm)                     │
-│       DeepSeek · OpenAI · Anthropic · 本地 · 任意      │
+│       glm-5.1 (智谱 GLM) · OpenAI · Anthropic · 本地 · 任意      │
 └──────────────────────────────────────────────────────┘
 ```
 
@@ -118,16 +118,16 @@ name: "HPC Performance Optimization"
 
 agents:
   - name: architect
-    model: deepseek-chat
+    model: glm-5.1
     skills: [hpc-design, vllm-config]
   - name: coder
-    model: deepseek-chat
+    model: glm-5.1
     skills: [model-integration, distributed-code]
   - name: optimizer
-    model: deepseek-chat
+    model: glm-5.1
     skills: [profiling, kernel-analysis]
   - name: reviewer
-    model: deepseek-chat
+    model: glm-5.1
     skills: [code-review]
 
 edges:
@@ -240,9 +240,9 @@ vllm_omni_cli skill install /path/to/my-skill
 
 ```toml
 [llm]
-model = "deepseek-chat"
+model = "glm-5.1"
 api_key = ""
-base_url = "https://api.deepseek.com/beta/"
+base_url = "https://open.bigmodel.cn/api/paas/v4"
 
 [tools]
 github_token = ""

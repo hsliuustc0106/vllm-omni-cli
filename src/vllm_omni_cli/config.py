@@ -13,7 +13,7 @@ CONFIG_DIR = Path.home() / ".vo"
 CONFIG_FILE = CONFIG_DIR / "config.toml"
 
 DEFAULT_CONFIG = {
-    "llm": {"model": "gpt-4o", "api_key": "", "base_url": ""},
+    "llm": {"model": "glm-5.1", "api_key": "", "base_url": "https://open.bigmodel.cn/api/paas/v4", "default_model": "standard"},
     "tools": {"github_token": ""},
     "skills": {"paths": []},
     "defaults": {"agents": ["architect", "coder", "reviewer"], "human_in_the_loop": False},

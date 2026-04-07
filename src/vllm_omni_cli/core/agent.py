@@ -23,7 +23,7 @@ class BaseAgent:
 
     name: str = "agent"
     role: str = "You are a helpful assistant."
-    model: str = "gpt-4o"
+    model: str = "glm-5.1"
     skills: list[BaseSkill] = []
     tools: list[BaseTool] = []
 

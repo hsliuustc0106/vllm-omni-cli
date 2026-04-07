@@ -31,7 +31,7 @@ def test_config_init_creates_file(temp_config):
     cfg = config_init()
     assert (temp_config / "config.toml").exists()
     assert "llm" in cfg
-    assert cfg["llm"]["model"] == "gpt-4o"
+    assert cfg["llm"]["model"] == "glm-5.1"
 
 
 def test_config_set_get_roundtrip(temp_config):
