@@ -53,6 +53,9 @@ vllm_omni_cli config init
 # 运行任务（自动编排 Agent）
 vllm_omni_cli run "Design a distributed serving pipeline for Qwen3-Omni"
 
+# 查看多 Agent 进度与路由信息
+vllm_omni_cli run --debug "Design the least latency deployment strategy for qwen-image on 2x NVIDIA L20"
+
 # 快速草案模式（适合 CLI 早期阶段，快速拿到可用答案）
 vllm_omni_cli run --quick --agents architect "Design the least latency deployment strategy for qwen-image with input 1024*1024 in 2x NVIDIA L20, each 46068 MiB VRAM, driver 570.211.01. GPU-to-GPU topology is NODE, not NVLink. Both GPUs are attached to NUMA node 1, CPU affinity 20-39,60-79. Host CPU is Intel Xeon Gold 6133, 2 sockets / 80 logical CPUs."
 
@@ -84,6 +87,8 @@ vllm_omni_cli catalog resolve qwen-image
 - 第二张 GPU 更适合做副本还是做张量并行
 
 如果模型名本身不够精确（例如 `qwen-image`），可以先同步 recipes 配方目录，再让 CLI 基于本地别名目录做更稳健的解析。
+
+调试模式下会输出一份简短的路由摘要，并显示类似 `[lead -> architect]`、`[optimizer] tool -> shell` 这样的进度行，方便观察多 Agent 的协作过程。
 
 ## 架构
 

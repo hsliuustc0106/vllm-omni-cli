@@ -18,6 +18,23 @@ BROAD_SCAN_PATTERNS = (
     "cat /root/.cache",
     "ls /root/.cache",
 )
+READ_ONLY_AGENTS = {"optimizer", "reviewer"}
+MUTATING_PATTERNS = (
+    " >",
+    " >>",
+    "| tee",
+    "tee ",
+    "touch ",
+    "mkdir ",
+    "cp ",
+    "mv ",
+    "rm ",
+    "chmod ",
+    "chown ",
+    "install ",
+    "sed -i",
+    "perl -pi",
+)
 
 
 class ShellTool(BaseTool):
@@ -44,6 +61,7 @@ class ShellTool(BaseTool):
         command = kwargs.get("command", "")
         timeout = kwargs.get("timeout", 60)
         cwd = kwargs.get("cwd")
+        agent_name = kwargs.get("_agent_name", "")
         normalized = " ".join(command.strip().split())
 
         # Safety check
@@ -57,6 +75,14 @@ class ShellTool(BaseTool):
                     "Blocked: broad filesystem scans are not allowed. "
                     "Use a repo-scoped command with cwd set, or inspect a specific known path."
                 )
+
+        if agent_name in READ_ONLY_AGENTS:
+            for pattern in MUTATING_PATTERNS:
+                if pattern in normalized:
+                    return (
+                        f"Blocked: agent '{agent_name}' is restricted to read-only shell usage. "
+                        "File creation or mutation is only allowed for the coder agent."
+                    )
 
         try:
             proc = await asyncio.create_subprocess_shell(

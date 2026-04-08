@@ -72,6 +72,7 @@ class BaseAgent:
         try:
             import json
             args = json.loads(tool_call.arguments) if tool_call.arguments else {}
+            args["_agent_name"] = self.name
             result = await tool.execute(**args)
             return str(result)
         except Exception as e:

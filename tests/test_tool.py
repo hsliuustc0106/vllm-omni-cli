@@ -184,6 +184,21 @@ async def test_shell_tool_allows_repo_scoped_command(tmp_path):
 
 
 @pytest.mark.asyncio
+async def test_shell_tool_blocks_mutation_for_reviewer(tmp_path):
+    tool = ShellTool()
+    result = await tool.execute(command="touch reviewer.txt", cwd=str(tmp_path), _agent_name="reviewer")
+    assert "read-only shell usage" in result
+
+
+@pytest.mark.asyncio
+async def test_shell_tool_allows_mutation_for_coder(tmp_path):
+    tool = ShellTool()
+    result = await tool.execute(command="touch coder.txt", cwd=str(tmp_path), _agent_name="coder")
+    assert result == ""
+    assert (tmp_path / "coder.txt").exists()
+
+
+@pytest.mark.asyncio
 async def test_model_resolver_tool_returns_alias_mapping():
     tool = ModelResolverTool()
     result = await tool.execute(model_name="qwen-image")
