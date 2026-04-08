@@ -13,7 +13,7 @@ class GitHubTool(BaseTool):
     name = "github"
     description = "Interact with GitHub: manage PRs, issues, and reviews via the gh CLI."
     category = "domain"
-    scopes = ["all"]
+    scopes = ["coder", "reviewer"]
     parameters = {
         "type": "object",
         "properties": {

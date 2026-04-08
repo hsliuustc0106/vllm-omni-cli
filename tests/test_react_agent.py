@@ -30,7 +30,7 @@ class TestReActAgentInit:
         agent = ReActAgent(name="test", role="Test role.")
         assert agent.name == "test"
         assert agent.role == "Test role."
-        assert agent._max_iterations == 20
+        assert agent._max_iterations == 40
 
     def test_react_agent_custom_max_iterations(self):
         agent = ReActAgent(name="test", max_iterations=5)
@@ -86,6 +86,22 @@ class TestReActAgentMaxIterations:
         assert "maximum iterations" in result.content
         assert mock_llm.complete.call_count == 2
 
+    @pytest.mark.asyncio
+    async def test_react_agent_stops_on_repeated_tool_call(self):
+        repeated = LLMResponse(
+            content="",
+            tool_calls=[_tool_call("search", {"query": "same"})],
+        )
+        mock_llm = _make_mock_llm([repeated, repeated, repeated])
+        agent = ReActAgent(name="test", role="Test.", llm=mock_llm, max_iterations=10)
+        ctx = Context(task=Task(description="Loop"))
+
+        result = await agent.run("Loop", ctx)
+
+        assert result.success is False
+        assert "repeating the same tool call" in result.content
+        assert mock_llm.complete.call_count == 3
+
 
 class TestReActAgentSingleTurn:
     @pytest.mark.asyncio
@@ -99,6 +115,9 @@ class TestReActAgentSingleTurn:
         assert result.content == "Quick answer."
         assert mock_llm.complete.call_count == 1
 
+        sent_messages = mock_llm.complete.call_args.kwargs["messages"]
+        assert "Quick Response Mode" in sent_messages[0]["content"]
+        assert "Respond with a direct draft answer now." in sent_messages[1]["content"]
 
 class TestReActAgentThinkMarker:
     @pytest.mark.asyncio

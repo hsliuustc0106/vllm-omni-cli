@@ -1,0 +1,95 @@
+{
+  "categories": [
+    "text-to-image",
+    "image-editing",
+    "audio-generation",
+    "omni-generation",
+    "diffusion-serving",
+    "serving",
+    "hardware-topology",
+    "distributed-inference",
+    "performance-optimization",
+    "code-implementation",
+    "code-review",
+    "general-architecture"
+  ],
+  "precedence": [
+    "text-to-image",
+    "audio-generation",
+    "omni-generation",
+    "serving",
+    "hardware-topology",
+    "performance-optimization",
+    "distributed-inference",
+    "code-implementation",
+    "code-review",
+    "general-architecture"
+  ],
+  "keyword_rules": [
+    {
+      "keywords": ["latency", "throughput", "ttft", "tokens/s", "perf", "benchmark"],
+      "category": "performance-optimization"
+    },
+    {
+      "keywords": ["nvlink", "numa", "pcie", "topology", "l20", "h20", "a100", "h100"],
+      "category": "hardware-topology"
+    },
+    {
+      "keywords": ["serve", "deployment", "serving", "vllm", "api_server"],
+      "category": "serving"
+    },
+    {
+      "keywords": ["diffusion", "dit", "text-to-image", "image generation", "edit image"],
+      "category": "text-to-image"
+    },
+    {
+      "keywords": ["tts", "text to speech", "voice", "audio generation"],
+      "category": "audio-generation"
+    },
+    {
+      "keywords": ["omni", "speech-in speech-out", "audio-vision-text", "multimodal generation"],
+      "category": "omni-generation"
+    }
+  ],
+  "family_skill_map": {
+    "Qwen-Image family": [
+      "vllm-omni-image-gen",
+      "vllm-omni-hardware",
+      "vllm-omni-serving",
+      "vllm-omni-perf",
+      "vllm-omni-recipe"
+    ],
+    "Qwen-Omni family": [
+      "vllm-omni-multimodal",
+      "vllm-omni-distributed",
+      "vllm-omni-serving",
+      "vllm-omni-perf",
+      "vllm-omni-recipe"
+    ],
+    "Qwen-TTS family": [
+      "vllm-omni-audio-tts",
+      "vllm-omni-serving",
+      "vllm-omni-perf",
+      "vllm-omni-hardware",
+      "vllm-omni-recipe"
+    ]
+  },
+  "family_agent_map": {
+    "Qwen-Image family": "architect",
+    "Qwen-Omni family": "architect",
+    "Qwen-TTS family": "architect"
+  },
+  "family_category_map": {
+    "Qwen-Image family": "text-to-image",
+    "Qwen-Omni family": "omni-generation",
+    "Qwen-TTS family": "audio-generation"
+  },
+  "family_type_map": {
+    "Qwen-Image family": "text-to-image / image-editing / DiT",
+    "Qwen-Omni family": "omni multimodal generation / speech-text-vision",
+    "Qwen-TTS family": "tts / audio generation"
+  },
+  "family_forbidden_map": {
+    "Qwen-Image family": "any Qwen-VL or generic VLM-chat family"
+  }
+}

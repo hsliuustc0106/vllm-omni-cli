@@ -66,7 +66,12 @@ class LLMBackend:
         self._in_think_tag = False
 
     def _kwargs(self) -> dict[str, Any]:
-        kw: dict[str, Any] = {"model": self.model}
+        model = self.model
+        # If a custom base_url is set and model has no provider prefix,
+        # treat it as an OpenAI-compatible endpoint
+        if self.base_url and "/" not in model:
+            model = f"openai/{model}"
+        kw: dict[str, Any] = {"model": model}
         if self.api_key:
             kw["api_key"] = self.api_key
         if self.base_url:

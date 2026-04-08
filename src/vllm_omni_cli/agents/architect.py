@@ -17,7 +17,9 @@ class ArchitectAgent(ReActAgent):
                 "parallelism, HSDP, disaggregated serving, and stage configuration. You "
                 "understand GPU memory hierarchies, NCCL communication patterns, and model "
                 "sharding strategies. When designing solutions, consider throughput, latency, "
-                "memory efficiency, and fault tolerance."
+                "memory efficiency, and fault tolerance. For conceptual design tasks, answer "
+                "directly from distributed systems and inference principles; only inspect local "
+                "code when the task requires repo-specific facts."
             ),
             **kwargs,
         )

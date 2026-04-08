@@ -2,22 +2,34 @@
 
 from __future__ import annotations
 
-import shlex
 import asyncio
 from typing import Any
 
 from ..core.tool import BaseTool
 
 BLOCKED_COMMANDS = {"rm -rf /", "mkfs", "dd if=", ":(){ :|:& };:"}
+BROAD_SCAN_PATTERNS = (
+    "find / ",
+    "find /root",
+    "find ~/",
+    "find ~/.",
+    "grep -R /",
+    "grep -r /",
+    "cat /root/.cache",
+    "ls /root/.cache",
+)
 
 
 class ShellTool(BaseTool):
     """Execute shell commands safely with timeout support."""
 
     name = "shell"
-    description = "Execute shell commands. Use 'run' for normal execution, 'run_with_timeout' for timeout."
+    description = (
+        "Execute a narrowly scoped shell command. Prefer repo-local inspection such as rg, ls, "
+        "sed, git, or python -c on a specific file. Do not scan the whole filesystem or caches."
+    )
     category = "execution"
-    scopes = ["all"]
+    scopes = ["coder", "optimizer", "reviewer"]
     parameters = {
         "type": "object",
         "properties": {
@@ -32,11 +44,19 @@ class ShellTool(BaseTool):
         command = kwargs.get("command", "")
         timeout = kwargs.get("timeout", 60)
         cwd = kwargs.get("cwd")
+        normalized = " ".join(command.strip().split())
 
         # Safety check
         for blocked in BLOCKED_COMMANDS:
             if blocked in command:
                 return f"Blocked: command contains dangerous pattern '{blocked}'"
+
+        for pattern in BROAD_SCAN_PATTERNS:
+            if normalized.startswith(pattern) or pattern in normalized:
+                return (
+                    "Blocked: broad filesystem scans are not allowed. "
+                    "Use a repo-scoped command with cwd set, or inspect a specific known path."
+                )
 
         try:
             proc = await asyncio.create_subprocess_shell(

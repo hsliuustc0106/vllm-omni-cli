@@ -53,6 +53,9 @@ vllm_omni_cli config init
 # 运行任务（自动编排 Agent）
 vllm_omni_cli run "Design a distributed serving pipeline for Qwen3-Omni"
 
+# 快速草案模式（适合 CLI 早期阶段，快速拿到可用答案）
+vllm_omni_cli run --quick --agents architect "Design the least latency deployment strategy for qwen-image with input 1024*1024 in 2x NVIDIA L20, each 46068 MiB VRAM, driver 570.211.01. GPU-to-GPU topology is NODE, not NVLink. Both GPUs are attached to NUMA node 1, CPU affinity 20-39,60-79. Host CPU is Intel Xeon Gold 6133, 2 sockets / 80 logical CPUs."
+
 # 指定 Agent
 vllm_omni_cli run "Optimize attention kernel for NPU" --agents optimizer,coder
 
@@ -60,13 +63,27 @@ vllm_omni_cli run "Optimize attention kernel for NPU" --agents optimizer,coder
 vllm_omni_cli run "Build a custom attention kernel" --pipeline pipeline.yaml
 
 # 交互式对话
-vllm_omni_cli chat --agent architect
+vllm_omni_cli chat --agent architect --skills vllm-omni-image-gen,vllm-omni-hardware
 
 # 查看可用资源
 vllm_omni_cli list agents
 vllm_omni_cli list tools
 vllm_omni_cli list skills
+
+# 同步 vllm-project/recipes 中的模型配方别名到本地目录 (~/.vo/model_aliases.json)
+vllm_omni_cli catalog sync-recipes
+
+# 查看某个模型别名的解析结果
+vllm_omni_cli catalog resolve qwen-image
 ```
+
+这个示例适合验证 Agent 是否会结合真实硬件拓扑给出低延迟部署建议，例如：
+- 单卡优先还是 `TP=2`
+- 是否应避免跨 GPU 同步
+- NUMA 绑定与 CPU 亲和性设置
+- 第二张 GPU 更适合做副本还是做张量并行
+
+如果模型名本身不够精确（例如 `qwen-image`），可以先同步 recipes 配方目录，再让 CLI 基于本地别名目录做更稳健的解析。
 
 ## 架构
 

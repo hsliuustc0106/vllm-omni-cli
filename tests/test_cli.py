@@ -27,10 +27,17 @@ def test_list_agents():
         assert name in result.output
 
 
+def test_list_alias_agents():
+    result = runner.invoke(app, ["list", "agents"])
+    assert result.exit_code == 0
+    for name in ["architect", "coder", "optimizer", "reviewer"]:
+        assert name in result.output
+
+
 def test_list_tools():
     result = runner.invoke(app, ["list-items", "tools"])
     assert result.exit_code == 0
-    for name in ["github", "shell", "vllm"]:
+    for name in ["github", "model_resolver", "shell", "vllm"]:
         assert name in result.output
 
 
@@ -58,3 +65,9 @@ def test_config_init(tmp_path, monkeypatch):
     result = runner.invoke(app, ["config", "init"])
     assert result.exit_code == 0
     assert "initialized" in result.output.lower()
+
+
+def test_catalog_resolve():
+    result = runner.invoke(app, ["catalog", "resolve", "qwen-image"])
+    assert result.exit_code == 0
+    assert "family: Qwen-Image family" in result.output

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -32,11 +33,17 @@ class LeadAgent:
         model: str | None = None,
         human_in_the_loop: bool = False,
         max_rounds: int = 20,
+        progress_callback: Callable[[str], None] | None = None,
     ) -> None:
         self.agents: dict[str, BaseAgent] = {a.name: a for a in agents}
         self._llm = llm or LLMBackend(model=model or "deepseek-chat")
         self.human_in_the_loop = human_in_the_loop
         self.max_rounds = max_rounds
+        self._progress_callback = progress_callback
+
+    def _emit_progress(self, message: str) -> None:
+        if self._progress_callback is not None:
+            self._progress_callback(message)
 
     def _build_system_prompt(self) -> str:
         agent_descriptions = "\n".join(
@@ -150,6 +157,7 @@ Rules:
         tools = self._build_tools()
 
         for round_num in range(self.max_rounds):
+            self._emit_progress(f"[lead] round {round_num + 1}/{self.max_rounds}")
             response = await self._llm.complete(messages, tools=tools)
             self._llm._diagnose_output(response.content, "stop", agent_name="lead")
 
@@ -181,6 +189,7 @@ Rules:
 
                 if tc.function_name == "finish":
                     summary = args.get("summary", "")
+                    self._emit_progress("[lead] finished")
                     ctx.add_message("lead", summary)
                     return LeadAgentResult(
                         content=summary,
@@ -192,6 +201,7 @@ Rules:
 
                 elif tc.function_name == "ask_user":
                     question = args.get("question", "")
+                    self._emit_progress(f"[lead] asking user: {question}")
                     if self.human_in_the_loop:
                         response_text = await self._get_user_input(question)
                     else:
@@ -209,8 +219,13 @@ Rules:
                     sub_agent = self.agents.get(agent_name)
 
                     if sub_agent:
+                        preview = " ".join(sub_task.split())
+                        if len(preview) > 120:
+                            preview = preview[:117] + "..."
+                        self._emit_progress(f"[lead -> {agent_name}] {preview}")
                         result = await sub_agent.run(sub_task, ctx)
                         result_text = result.content
+                        self._emit_progress(f"[{agent_name}] returned ({'ok' if result.success else 'incomplete'})")
                         agent_calls.append({
                             "agent_name": agent_name,
                             "task": sub_task,

@@ -13,7 +13,7 @@ class VllmTool(BaseTool):
     name = "vllm"
     description = "Manage vllm-omni: serve models, run benchmarks, stop instances."
     category = "domain"
-    scopes = ["all"]
+    scopes = ["coder", "optimizer"]
     parameters = {
         "type": "object",
         "properties": {

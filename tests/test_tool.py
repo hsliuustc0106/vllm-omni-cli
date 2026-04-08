@@ -4,6 +4,7 @@ import pytest
 
 from vllm_omni_cli.core.tool import BaseTool, ToolRegistry
 from vllm_omni_cli.tools.github import GitHubTool
+from vllm_omni_cli.tools.model_resolver import ModelResolverTool
 from vllm_omni_cli.tools.vllm import VllmTool
 from vllm_omni_cli.tools.shell import ShellTool
 
@@ -119,7 +120,7 @@ def test_get_unregistered_returns_none():
     assert reg.get("nope") is None
 
 
-@pytest.mark.parametrize("cls", [GitHubTool, VllmTool, ShellTool])
+@pytest.mark.parametrize("cls", [GitHubTool, ModelResolverTool, VllmTool, ShellTool])
 def test_builtin_tools_have_required_fields(cls):
     tool = cls()
     assert isinstance(tool.name, str) and len(tool.name) > 0
@@ -147,3 +148,44 @@ def test_to_anthropic_tools_format():
     t = tools[0]
     assert set(t.keys()) >= {"name", "description", "input_schema"}
     assert t["input_schema"]["type"] == "object"
+
+
+def test_tool_registry_scope_filters_tools():
+    reg = ToolRegistry()
+    reg.register(ShellTool())
+    reg.register(GitHubTool())
+    reg.register(ModelResolverTool())
+    reg.register(VllmTool())
+
+    architect_tools = reg.to_openai_tools(scope="architect")
+    coder_tools = reg.to_openai_tools(scope="coder")
+    optimizer_tools = reg.to_openai_tools(scope="optimizer")
+
+    assert {tool["function"]["name"] for tool in architect_tools} == {"model_resolver"}
+    assert {tool["function"]["name"] for tool in coder_tools} == {"shell", "github", "model_resolver", "vllm"}
+    assert {tool["function"]["name"] for tool in optimizer_tools} == {"shell", "model_resolver", "vllm"}
+
+
+@pytest.mark.asyncio
+async def test_shell_tool_blocks_broad_filesystem_scan():
+    tool = ShellTool()
+    result = await tool.execute(command='find / -name "*.py"')
+    assert "broad filesystem scans" in result
+
+
+@pytest.mark.asyncio
+async def test_shell_tool_allows_repo_scoped_command(tmp_path):
+    sample = tmp_path / "sample.txt"
+    sample.write_text("hello\n", encoding="utf-8")
+
+    tool = ShellTool()
+    result = await tool.execute(command="cat sample.txt", cwd=str(tmp_path))
+    assert result == "hello\n"
+
+
+@pytest.mark.asyncio
+async def test_model_resolver_tool_returns_alias_mapping():
+    tool = ModelResolverTool()
+    result = await tool.execute(model_name="qwen-image")
+    assert "alias=qwen-image" in result
+    assert "family=Qwen-Image family" in result
